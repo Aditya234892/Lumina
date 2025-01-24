@@ -20,7 +20,11 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
-    "noUncheckedSideEffectImports": true
+    "noUncheckedSideEffectImports": true,
+
+    /* For adding @/lib/utils.ts */
+    "baseUrl": "./src",
+    "paths": { "@/*": ["*"] }
   },
   "include": ["src"]
 }
