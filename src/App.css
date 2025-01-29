@@ -1,9 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Merienda:wght@300..900&display=swap');
+
 @keyframes moveShadow {
     0% {
       transform: translateX(0) translateY(0);
     }
     50% {
-      transform: translateX(30px) translateY(30px);
+      transform: translateX(15px) translateY(15px);
     }
     100% {
       transform: translateX(0) translateY(0);

@@ -1,4 +1,6 @@
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer utilities {
     .rotate-y-0 {
@@ -8,4 +10,4 @@
     .rotate-y-180 {
       transform: rotateY(180deg);
     }
-  }
+  };

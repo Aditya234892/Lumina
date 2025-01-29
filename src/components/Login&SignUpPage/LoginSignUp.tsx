@@ -1,33 +1,97 @@
-import { WavyBackground } from "@/ui/aceternity components/wavy-background";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/shadcn components/tabs";
-import { useState } from "react";
-import googleLogo from "../assets/google.png";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/shadcn components/tabs";
+import { useReducer, useState } from "react";
+import googleLogo from "../../assets/google.png";
+import { createUserWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth, googleProvider } from "../../firebase/Firebase";
+import { useNavigate } from "react-router-dom";
+import { AuroraBackground } from "@/ui/aceternity components/aurora-background";
+
+interface State {
+  email: string;
+  password: string;
+  username: string;
+  rememberMe: boolean;
+}
+type Action = | { type: "SET_FIELD"; field: keyof State; value: string | boolean };
+
 
 const LoginSignUp: React.FC = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("SignUp");
+  const initialState: State = {
+    email: "",
+    password: "",
+    username: "",
+    rememberMe: false,
+  }
+
+  const reducer = (state: State, action: Action) => {
+    switch(action.type){
+      case "SET_FIELD":
+        return{
+          ...state, 
+          [action.field]: action.value
+        };
+
+        default: 
+          return state;
+    }
+  }
+  const [state, dispatch] = useReducer(reducer, initialState);
+
 
   const signInWithGoogle = () => {
-    // Handle Google sign-in here
+    signInWithPopup(auth, googleProvider)
+    .then((result) => {
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      // console.log("Results: " ,result);
+      console.log("Credential: " ,credential);
+      navigate("/username");
+      // const token = credential ? credential.accessToken : null;
+      // const user = result.user;
+    })
+    .catch((error) => {
+      console.log("Error: ",error);4
+      // const errorCode = error?.code;
+      // const errorMessage = error?.message;
+      // const email = error?.customData?.email;
+      // const credential = GoogleAuthProvider.credentialFromError(error);
+      // console.log("Credential: " ,credential);
+      // console.log("ErrorCode: " ,errorCode);
+      // console.log("ErrorMessage: " ,errorMessage);
+      // console.log("Email: " ,email);
+    })
   };
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if(activeTab === "SignUp"){
+      await createUserWithEmailAndPassword(auth, state.email, state.password)
+      .then((value) => {
+        navigate("/username");
+        console.log(value)})
+      .catch((error) => console.log("Error: ", error))
+      // console.log("Email: ", state.email);
+      // console.log("Pass:", state.password);
+    } else{
+      
+    }
+  }
+
   return (
-    <div className="relative">
-      <WavyBackground
-        colors={["#22c55e", "#1d4ed8", "#38bdf8", "#ec4899", "#34d399"]}
-        backgroundFill="#00111f"
-        blur={8}
-        speed="fast"
-        waveOpacity={0.8}
+    <div className="relative transition-opacity duration-1000"
+    >
+      <AuroraBackground
+        className="w-full flex justify-center items-center"
       >
+        <section className="relative w-1/3  border z-10 min-w-xl h-2xl px-10 py-8 rounded-xl bg-[rgba(255,255,255,0.4)] shadow-2xl backdrop-blur-md">
         <div
-          className={`rounded-3xl absolute inset-0 z-0 transition-all duration-500 ${
+          className={`rounded-xl  absolute inset-0 z-0 transition-all duration-500 ${
             activeTab === "SignUp"
-              ? "bg-green-500/20 shadow-[0px_0px_100px_40px_rgba(34,197,94,0.6)] animate-move-shadow"
-              : "bg-blue-500/20 shadow-[0px_0px_100px_40px_rgba(59,130,246,0.6)] animate-move-shadow"
+              ? "bg-green-400/40 shadow-[0px_0px_50px_5px_rgba(34,197,94,0.4)]"
+              : "bg-blue-400/40 shadow-[0px_0px_50px_5px_rgba(59,130,246,0.4)]"
           }`}
         ></div>
-
-        <section className="relative z-10 min-w-xl h-2xl px-10 py-8 rounded-2xl bg-[rgba(255,255,255,0.4)] shadow-2xl backdrop-blur-md">
           <Tabs
             defaultValue="SignUp"
             onValueChange={(value) => setActiveTab(value)}
@@ -59,12 +123,15 @@ const LoginSignUp: React.FC = () => {
             <div className="relative z-20">
               <TabsContent
                 value="SignUp"
-                className={`transition-all duration-500 transform ${
-                  activeTab === "SignUp" ? "rotate-y-0" : "-rotate-y-180"
+                className={`transition-all duration-700 transform ease-in-out ${
+                  activeTab === "SignUp" ? "rotate-y-0" : "rotate-y-180"
+                }
+                ${
+                  activeTab === "SignUp" ? "opacity-100" : "opacity-0"
                 }`}
               >
                 {activeTab === "SignUp" && (
-                  <form className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                       <label
                         htmlFor="email"
@@ -77,6 +144,9 @@ const LoginSignUp: React.FC = () => {
                         id="email"
                         className="w-full mt-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-none"
                         placeholder="Enter your email"
+                        onChange={(e) =>
+                          dispatch({ type: "SET_FIELD", field: "email", value: (e.target as HTMLInputElement).value })
+                        }
                       />
                     </div>
                     <div>
@@ -91,6 +161,9 @@ const LoginSignUp: React.FC = () => {
                         id="password"
                         className="w-full mt-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-green-600 focus:border-none"
                         placeholder="Enter your password"
+                        onChange={(e) =>
+                          dispatch({ type: "SET_FIELD", field: "password", value: (e.target as HTMLInputElement).value })
+                        }
                       />
                     </div>
                     <div className="flex items-center space-x-2">
@@ -98,6 +171,9 @@ const LoginSignUp: React.FC = () => {
                         type="checkbox"
                         id="rememberMe"
                         className="h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
+                        onChange={(e) =>
+                          dispatch({ type: "SET_FIELD", field: "rememberMe", value: (e.target as HTMLInputElement).value })
+                        }
                       />
                       <label
                         htmlFor="rememberMe"
@@ -110,7 +186,7 @@ const LoginSignUp: React.FC = () => {
                       <button
                         type="button"
                         onClick={signInWithGoogle}
-                        className="w-full bg-dark-beige text-teal-100 rounded-lg py-2 hover:bg-teal-100 hover:text-teal-500 shadow transition duration-300 flex justify-center items-center gap-x-3"
+                        className="w-full bg-dark-beige text-teal-100 rounded-lg py-2 hover:bg-teal-100 hover:text-teal-500 shadow transition duration-300 flex justify-center items-center gap-x-3 cursor-pointer"
                       >
                         Sign Up with{" "}
                         <img
@@ -133,12 +209,15 @@ const LoginSignUp: React.FC = () => {
 
               <TabsContent
                 value="LogIn"
-                className={`transition-all duration-500 transform ${
+                className={`transition-all duration-700 transform ${
                   activeTab === "LogIn" ? "rotate-y-0" : "rotate-y-180"
+                }
+                ${
+                  activeTab === "LogIn" ? "opacity-100" : "opacity-0"
                 }`}
               >
                 {activeTab === "LogIn" && (
-                  <form className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                       <label
                         htmlFor="username"
@@ -151,6 +230,9 @@ const LoginSignUp: React.FC = () => {
                         id="username"
                         className="w-full mt-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-none"
                         placeholder="Enter your username"
+                        onChange={(e) =>
+                          dispatch({ type: "SET_FIELD", field: "username", value: (e.target as HTMLInputElement).value })
+                        }
                       />
                     </div>
                     <div>
@@ -165,6 +247,9 @@ const LoginSignUp: React.FC = () => {
                         id="password"
                         className="w-full mt-1 px-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-none"
                         placeholder="Enter your password"
+                        onChange={(e) =>
+                          dispatch({ type: "SET_FIELD", field: "password", value: (e.target as HTMLInputElement).value })
+                        }
                       />
                     </div>
                     <div className="flex justify-between items-center">
@@ -173,6 +258,9 @@ const LoginSignUp: React.FC = () => {
                           type="checkbox"
                           id="rememberMe"
                           className="h-4 w-4 rounded border-gray-300 focus:ring-blue-500"
+                          onChange={(e) =>
+                            dispatch({ type: "SET_FIELD", field: "rememberMe", value: (e.target as HTMLInputElement).value })
+                          }
                         />
                         <label
                           htmlFor="rememberMe"
@@ -198,7 +286,7 @@ const LoginSignUp: React.FC = () => {
                       <button
                         type="button"
                         onClick={signInWithGoogle}
-                        className="w-full bg-dark-beige text-teal-100 rounded-lg py-2 hover:bg-teal-100 hover:text-teal-500 transition duration-300 flex justify-center items-center gap-x-3 shadow-2xl"
+                        className="w-full bg-dark-beige text-teal-100 rounded-lg py-2 hover:bg-teal-100 hover:text-teal-500 transition duration-300 flex justify-center items-center gap-x-3 shadow-2xl cursor-pointer"
                       >
                         Sign In with{" "}
                         <img
@@ -214,7 +302,7 @@ const LoginSignUp: React.FC = () => {
             </div>
           </Tabs>
         </section>
-      </WavyBackground>
+      </AuroraBackground>
     </div>
   );
 };
